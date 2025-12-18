@@ -1,8 +1,15 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:5000/api', // Direct URL since we are exposing it on host
-    // In production with docker networking, this might differ if SSR, but for loose coupling client-side rendering localhost is fine if port is mapped.
+    baseURL: 'http://localhost:5000/api',
+});
+
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
 });
 
 export default api;

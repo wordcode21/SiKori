@@ -11,6 +11,7 @@ import Reports from './pages/Reports';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
+import Backup from './pages/Backup';
 
 const PrivateRoute = () => {
     const { user, loading } = useAuth();
@@ -42,6 +43,7 @@ function App() {
 
                             <Route element={<SuperAdminRoute />}>
                                 <Route path="users" element={<UserManagement />} />
+                                <Route path="backup" element={<Backup />} />
                             </Route>
                         </Route>
                     </Route>

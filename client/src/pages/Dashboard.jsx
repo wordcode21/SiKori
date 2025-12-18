@@ -70,7 +70,7 @@ const Dashboard = () => {
             </div>
 
             <div className="glass-card p-8 text-center mt-12">
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Selamat Datang di Sistem Kokurikuler v3.0</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Selamat Datang di SiKori v1.0</h3>
                 <p className="text-gray-500 max-w-2xl mx-auto">
                     Sistem ini telah diperbarui menggunakan teknologi Full Stack (React + Express + MySQL).
                     Silakan mulai dengan menginput <strong>Data Siswa</strong> atau mengatur <strong>Kegiatan</strong> baru.

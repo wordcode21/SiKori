@@ -25,7 +25,7 @@ const Login = () => {
         <div className="min-h-screen flex items-center justify-center bg-slate-100">
             <div className="glass-card p-8 w-full max-w-md bg-white">
                 <div className="text-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800">SiKo Login</h1>
+                    <h1 className="text-2xl font-bold text-gray-800">SiKori v1.0</h1>
                     <p className="text-gray-500 text-sm">Masuk ke Sistem Kokurikuler</p>
                 </div>
 

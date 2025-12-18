@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, PenTool, FileText, CheckCircle, LogOut, User, Shield, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, PenTool, FileText, CheckCircle, LogOut, User, Shield, Menu, X, Database } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -27,18 +27,16 @@ const Sidebar = ({ isOpen, onClose }) => {
     // Show User Management only for SuperAdmin
     if (user?.role === 'SUPER_ADMIN') {
         navItems.push({ to: "/users", icon: <Shield size={20} />, label: "Manajemen User" });
+        navItems.push({ to: "/backup", icon: <Database size={20} />, label: "Backup & Restore" });
     }
 
     return (
         <aside className={`fixed inset-y-0 left-0 bg-slate-900 w-64 text-white flex flex-col shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
             <div className="p-6 border-b border-slate-800 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                    <div className="bg-blue-600 p-2 rounded-lg">
-                        <CheckCircle className="text-white" size={24} />
-                    </div>
                     <div>
-                        <h1 className="font-bold text-lg tracking-tight">SiKori</h1>
-                        <p className="text-xs text-slate-400">Ver. 3.2 Mobile</p>
+                        <h1 className="font-bold text-lg tracking-tight">SiKori v1.0</h1>
+                        <p className="text-xs text-slate-400">Sistem Kokurikuler</p>
                     </div>
                 </div>
                 <button onClick={onClose} className="md:hidden text-slate-400 hover:text-white">
@@ -93,7 +91,6 @@ const Layout = () => {
             {/* Mobile Header */}
             <div className="md:hidden fixed top-0 w-full bg-slate-900 text-white p-4 flex items-center justify-between z-40 shadow-md">
                 <div className="flex items-center gap-2">
-                    <CheckCircle className="text-blue-500" size={24} />
                     <span className="font-bold text-lg">SiKori</span>
                 </div>
                 <button onClick={() => setSidebarOpen(true)} className="p-1 rounded hover:bg-slate-800">
