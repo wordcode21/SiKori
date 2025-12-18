@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { Plus, Trash2, Edit, Shield } from 'lucide-react';
 
-const ROLES = ['SUPER_ADMIN', 'ADMIN', 'HEADMASTER', 'HOMEROOM_TEACHER', 'SUBJECT_TEACHER'];
+const ROLES = ['SUPER_ADMIN', 'ADMIN', 'KEPALA_SEKOLAH', 'WALI_KELAS', 'GURU_MATA_PELAJARAN'];
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
@@ -15,7 +15,7 @@ const UserManagement = () => {
         username: '',
         password: '',
         fullName: '',
-        role: 'SUBJECT_TEACHER',
+        role: 'GURU_MATA_PELAJARAN',
         nip: ''
     });
 
@@ -67,7 +67,7 @@ const UserManagement = () => {
     };
 
     const resetForm = () => {
-        setFormData({ id: '', username: '', password: '', fullName: '', role: 'SUBJECT_TEACHER', nip: '' });
+        setFormData({ id: '', username: '', password: '', fullName: '', role: 'GURU_MATA_PELAJARAN', nip: '' });
         setEditMode(false);
     };
 
@@ -104,8 +104,8 @@ const UserManagement = () => {
                                 <td className="p-4 font-mono text-gray-600">{u.username}</td>
                                 <td className="p-4">
                                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-700' :
-                                            u.role === 'ADMIN' ? 'bg-blue-100 text-blue-700' :
-                                                'bg-gray-100 text-gray-700'
+                                        u.role === 'ADMIN' ? 'bg-blue-100 text-blue-700' :
+                                            'bg-gray-100 text-gray-700'
                                         }`}>
                                         {u.role.replace('_', ' ')}
                                     </span>
@@ -155,7 +155,7 @@ const UserManagement = () => {
                             </div>
 
                             <div className="flex gap-3 mt-6">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 text-gray-500 hover:bg-gray-100 rounded-lg">Batal</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 text-red-500 hover:bg-red-50 rounded-lg border border-red-200">Batal</button>
                                 <button type="submit" className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold">Simpan</button>
                             </div>
                         </form>

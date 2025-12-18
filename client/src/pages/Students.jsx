@@ -217,7 +217,7 @@ const Students = () => {
                                     value={formData.class} onChange={e => setFormData({ ...formData, class: e.target.value })} />
                             </div>
                             <div className="flex gap-3 mt-6">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 text-gray-500 hover:bg-gray-100 rounded-lg">Batal</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 text-red-500 hover:bg-red-50 rounded-lg border border-red-200">Batal</button>
                                 <button type="submit" className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold">Simpan</button>
                             </div>
                         </form>

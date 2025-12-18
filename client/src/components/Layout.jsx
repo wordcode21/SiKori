@@ -20,7 +20,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     ];
 
     // Show Config only for Admin/Headmaster/SuperAdmin
-    if (['SUPER_ADMIN', 'ADMIN', 'HEADMASTER'].includes(user?.role)) {
+    if (['SUPER_ADMIN', 'ADMIN', 'KEPALA_SEKOLAH'].includes(user?.role)) {
         navItems.splice(2, 0, { to: "/config", icon: <Settings size={20} />, label: "Konfigurasi" });
     }
 

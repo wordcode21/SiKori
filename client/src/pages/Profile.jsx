@@ -37,7 +37,7 @@ const Profile = () => {
                     </div>
                     <div>
                         <h3 className="text-xl font-bold">{user.fullName}</h3>
-                        <p className="text-gray-500">Role: <span className="font-mono bg-gray-100 px-2 rounded text-xs">{user.role}</span></p>
+                        <p className="text-gray-500">Role: <span className="font-mono bg-gray-100 px-2 rounded text-xs">{user.role?.replace(/_/g, ' ')}</span></p>
                         <p className="text-gray-400 text-sm">@{user.username}</p>
                     </div>
                 </div>
