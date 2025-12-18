@@ -59,6 +59,14 @@ Hanya satu yang wajib diinstall:
 - **Database Error**:
   Tunggu sebentar. MySQL butuh waktu booting lebih lama daripada Node.js. Server akan otomatis mencoba connect ulang (retry) setiap 5 detik.
 
+## Akun Default (Super Admin)
+
+Saat pertama kali menjalankan aplikasi, gunakan akun berikut untuk Login:
+- **Username**: `admin`
+- **Password**: `password123`
+
+> **PENTING**: Segera ganti password Anda melalui menu **Profil** setelah berhasil login untuk keamanan.
+
 ## Pengembangan (Development)
 
 - File kode di folder `client/` dan `server/` **tersinkronisasi** dengan Docker.

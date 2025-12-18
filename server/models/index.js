@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const User = require('./User'); // Import User model
 
 const Student = sequelize.define('Student', {
     nisn: {
@@ -115,5 +116,6 @@ module.exports = {
     Activity,
     SummativeAspect,
     FormativeItem,
-    Assessment
+    Assessment,
+    User
 };
