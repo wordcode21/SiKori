@@ -190,7 +190,7 @@ const Students = () => {
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 backdrop-blur-sm p-6 min-h-screen">
                     <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative animate-fade-in">
                         <h3 className="text-xl font-bold mb-4">Tambah Siswa</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
