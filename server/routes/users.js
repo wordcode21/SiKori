@@ -18,7 +18,7 @@ router.get('/', authenticate, authorize(['SUPER_ADMIN']), async (req, res) => {
 // CREATE USER (Super Admin only)
 router.post('/', authenticate, authorize(['SUPER_ADMIN']), async (req, res) => {
     try {
-        const { username, password, fullName, role, nip } = req.body;
+        const { username, password, fullName, role, nip, assignedClass, assignedSubjects } = req.body;
 
         const existing = await User.findOne({ where: { username } });
         if (existing) return res.status(400).json({ error: 'Username sudah digunakan' });
@@ -31,7 +31,10 @@ router.post('/', authenticate, authorize(['SUPER_ADMIN']), async (req, res) => {
             password: hashedPassword,
             fullName,
             role,
-            nip
+            nip,
+            assignedClass,
+            assignedClasses,
+            assignedSubjects
         });
 
         res.status(201).json({ message: 'User created', user: { id: newUser.id, username: newUser.username, role: newUser.role } });
@@ -43,13 +46,18 @@ router.post('/', authenticate, authorize(['SUPER_ADMIN']), async (req, res) => {
 // UPDATE USER (Super Admin only)
 router.put('/:id', authenticate, authorize(['SUPER_ADMIN']), async (req, res) => {
     try {
-        const { password, fullName, role, nip } = req.body;
+        const { password, fullName, role, nip, assignedClass, assignedClasses, assignedSubjects } = req.body;
         const user = await User.findByPk(req.params.id);
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         if (fullName) user.fullName = fullName;
         if (role) user.role = role;
         if (nip) user.nip = nip;
+
+        // Always update these, allow nullifying
+        user.assignedClass = assignedClass || null;
+        user.assignedClasses = assignedClasses || null;
+        user.assignedSubjects = assignedSubjects || null;
 
         if (password && password.trim() !== "") {
             const salt = await bcrypt.genSalt(10);

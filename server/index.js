@@ -16,9 +16,12 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+// Public backup/restore might need auth too, but sticking to plan for /api
+const { authenticate } = require('./middleware/auth');
 app.use('/api/users', userRoutes);
 app.use('/api/backup', require('./routes/backup'));
-app.use('/api', apiRoutes);
+// Protect all other API routes
+app.use('/api', authenticate, apiRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Kokurikuler API Ready', status: 'Running' });

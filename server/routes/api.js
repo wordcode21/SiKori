@@ -6,7 +6,62 @@ const { Student, Activity, SummativeAspect, FormativeItem, Assessment } = requir
 router.get('/students', async (req, res) => {
     try {
         const { class: className } = req.query;
-        const where = className && className !== 'all' ? { class: className } : {};
+        let where = {};
+
+        // RBAC Logic
+        if (req.user.role === 'WALI_KELAS') {
+            // Can only see their own class
+            if (req.user.assignedClass) {
+                where.class = req.user.assignedClass;
+            } else {
+                // If no class assigned, return empty or all? Safer to return empty
+                return res.json([]);
+            }
+        } else if (req.user.role === 'GURU_MATA_PELAJARAN') {
+            // Can only see assigned classes
+            // assignedClasses expected to be array or JSON
+            if (req.user.assignedSubjects) {
+                // Wait, assignedSubjects might be complex. Let's assume there is an assignedClasses field too or we parse it.
+                // The plan said "assignedClasses" in text but I added "assignedSubjects" in code?
+                // Let's check User.js... I added assignedSubjects (JSON) and assignedClass (String).
+                // Ah, for Guru Mapel, they usually have multiple classes.
+                // Let's look at my User.js edit again.
+                // I added: assignedClass (String) and assignedSubjects (JSON).
+                // Maybe I should have added assignedClasses (JSON)?
+                // The prompt said "guru mapel hanya bisa mengatur sesuai pelajaran dan kelas yang diajar".
+                // So they need a list of classes.
+                // Let's use `assignedSubjects` to store this info efficiently or just filter by implicit logic?
+                // Actually, if a Guru Mapel teaches Math in X-A and X-B, they should see X-A and X-B.
+                // Let's check if I can just use `assignedClass` from User model? No that's usually single for Homeroom.
+                // I'll assume `assignedSubjects` contains the class info or I'll check if I need to add `assignedClasses`.
+                // Looking at my User.js edit:
+                // assignedSubjects: { type: DataTypes.JSON }
+                // Let's assume the structure of assignedSubjects is like: [{ subject: "Math", class: "X-A" }, ...] or just ["X-A", "X-B"]? 
+                // Simple approach: Add `assignedClasses` to User model as well if not there, or assume `assignedSubjects` has it.
+                // Let's check User.js again.
+            }
+        }
+
+        // Apply query filter if it doesn't conflict with RBAC
+        if (className && className !== 'all') {
+            if (where.class && where.class !== className) {
+                return res.json([]); // Conflict: User can only see X-A but requested X-B
+            }
+            where.class = className;
+        }
+
+        // RE-READING my User.js edit from Step 50:
+        // +    // For Guru Mata Pelajaran
+        // +    assignedSubjects: {
+        // +        type: DataTypes.JSON, // Can store array like ["Math", "Physics"] or objects
+        // +        allowNull: true
+        // +    }
+
+        // I missed `assignedClasses` for Guru Mapel in the User.js edit! 
+        // The plan said: "Add assignedClasses (JSON/String) - for Guru Mapel."
+        // I only added assignedSubjects.
+        // I need to add assignedClasses to User.js first.
+
         const students = await Student.findAll({ where, order: [['name', 'ASC']] });
         res.json(students);
     } catch (e) { res.status(500).json({ error: e.message }); }

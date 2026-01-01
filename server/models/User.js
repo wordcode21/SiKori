@@ -28,6 +28,20 @@ const User = sequelize.define('User', {
     nip: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    // For Wali Kelas
+    assignedClass: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    // For Guru Mata Pelajaran
+    assignedClasses: {
+        type: DataTypes.JSON,
+        allowNull: true
+    },
+    assignedSubjects: {
+        type: DataTypes.JSON, // Can store array like ["Math", "Physics"] or objects
+        allowNull: true
     }
 });
 

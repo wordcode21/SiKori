@@ -16,7 +16,10 @@ const UserManagement = () => {
         password: '',
         fullName: '',
         role: 'GURU_MATA_PELAJARAN',
-        nip: ''
+        nip: '',
+        assignedClass: '',
+        assignedClasses: [], // Array for Guru Mapel
+        assignedSubjects: []
     });
 
     useEffect(() => {
@@ -67,7 +70,7 @@ const UserManagement = () => {
     };
 
     const resetForm = () => {
-        setFormData({ id: '', username: '', password: '', fullName: '', role: 'GURU_MATA_PELAJARAN', nip: '' });
+        setFormData({ id: '', username: '', password: '', fullName: '', role: 'GURU_MATA_PELAJARAN', nip: '', assignedClass: '', assignedClasses: [], assignedSubjects: [] });
         setEditMode(false);
     };
 
@@ -122,8 +125,8 @@ const UserManagement = () => {
             </div>
 
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 backdrop-blur-sm p-6 min-h-screen">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative animate-fade-in">
                         <h3 className="text-xl font-bold mb-4">{editMode ? 'Edit User' : 'Tambah User'}</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
@@ -153,6 +156,41 @@ const UserManagement = () => {
                                 <input type="text" className="w-full border p-2 rounded outline-none focus:ring-2 focus:ring-blue-500"
                                     value={formData.nip} onChange={e => setFormData({ ...formData, nip: e.target.value })} />
                             </div>
+
+                            {/* Conditional Inputs based on Role */}
+                            {formData.role === 'WALI_KELAS' && (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Kelas Wali (Contoh: X-A)</label>
+                                    <input type="text" className="w-full border p-2 rounded outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={formData.assignedClass || ''}
+                                        onChange={e => setFormData({ ...formData, assignedClass: e.target.value })}
+                                        placeholder="X-A"
+                                    />
+                                </div>
+                            )}
+
+                            {formData.role === 'GURU_MATA_PELAJARAN' && (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Kelas Ajar (Pisahkan dengan koma)</label>
+                                    <input type="text" className="w-full border p-2 rounded outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={Array.isArray(formData.assignedClasses) ? formData.assignedClasses.join(', ') : formData.assignedClasses || ''}
+                                        onChange={e => setFormData({ ...formData, assignedClasses: e.target.value.split(',').map(c => c.trim()).filter(Boolean) })}
+                                        placeholder="X-A, X-B, XI-A"
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1">Masukkan daftar kelas yang diajar, pisahkan dengan koma.</p>
+                                </div>
+                            )}
+
+                            {formData.role === 'GURU_MATA_PELAJARAN' && (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1">Mata Pelajaran (Pisahkan dengan koma)</label>
+                                    <input type="text" className="w-full border p-2 rounded outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={Array.isArray(formData.assignedSubjects) ? formData.assignedSubjects.join(', ') : formData.assignedSubjects || ''}
+                                        onChange={e => setFormData({ ...formData, assignedSubjects: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                                        placeholder="Matematika, Fisika"
+                                    />
+                                </div>
+                            )}
 
                             <div className="flex gap-3 mt-6">
                                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 text-red-500 hover:bg-red-50 rounded-lg border border-red-200">Batal</button>
