@@ -13,6 +13,12 @@ const DIMENSIONS = [
     "Komunikasi"
 ];
 
+const DIMENSION_LABELS = {
+    "Keimanan dan Ketakwaan Terhadap Tuhan YME": "Keimanan & Ketakwaan (YME)",
+    "Kewargaan (Global/Lokal)": "Kewargaan (Global)",
+    "Kesehatan (Fisik & Mental)": "Kesehatan (Fisik/Mental)"
+};
+
 const Config = () => {
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -146,10 +152,10 @@ const Config = () => {
                                                 value={asp.name} onChange={e => updateAspect(idx, 'name', e.target.value)} />
                                             <button type="button" onClick={() => removeAspect(idx)} className="text-gray-300 hover:text-red-500 transition-colors"><X size={16} /></button>
                                         </div>
-                                        <select required className="w-full text-xs border-gray-200 rounded-lg p-2 bg-gray-50 focus:bg-white transition-colors"
+                                        <select required className="w-full text-sm border-gray-200 rounded-lg p-2.5 bg-gray-50 focus:bg-white transition-colors"
                                             value={asp.dimension} onChange={e => updateAspect(idx, 'dimension', e.target.value)}>
-                                            <option value="">-- Pilih Dimensi Profil Pelajar Pancasila --</option>
-                                            {DIMENSIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                                            <option value="">-- Pilih Dimensi Profil Lulusan --</option>
+                                            {DIMENSIONS.map(d => <option key={d} value={d}>{DIMENSION_LABELS[d] || d}</option>)}
                                         </select>
                                     </div>
                                 ))}

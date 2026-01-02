@@ -108,7 +108,7 @@ const Layout = () => {
 
             <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-            <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-x-hidden pt-20 md:pt-8 transition-all duration-300">
+            <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 transition-all duration-300">
                 <div className="max-w-7xl mx-auto">
                     <Outlet />
                 </div>

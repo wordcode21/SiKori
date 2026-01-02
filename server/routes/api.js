@@ -87,6 +87,19 @@ router.post('/students', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+router.put('/students/:nisn', async (req, res) => {
+    try {
+        const { name, class: className, nis } = req.body;
+        const student = await Student.findByPk(req.params.nisn);
+
+        if (!student) return res.status(404).json({ error: 'Siswa tidak ditemukan' });
+
+        // Update fields (excluding NISN as it is PK)
+        await student.update({ name, class: className, nis });
+        res.json(student);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 router.delete('/students/:nisn', async (req, res) => {
     try {
         await Student.destroy({ where: { nisn: req.params.nisn } });

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Plus, Trash2, Search, FileSpreadsheet } from 'lucide-react';
+import { Plus, Trash2, Search, FileSpreadsheet, Pencil } from 'lucide-react';
 
 const Students = () => {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterClass, setFilterClass] = useState('all');
     const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({ name: '', nisn: '', nis: '', class: '' });
 
     useEffect(() => {
@@ -39,13 +40,28 @@ const Students = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/students', formData);
+            if (isEditing) {
+                await api.put(`/students/${formData.nisn}`, formData);
+            } else {
+                await api.post('/students', formData);
+            }
             setShowModal(false);
-            setFormData({ name: '', nisn: '', nis: '', class: '' });
+            resetForm();
             fetchStudents();
         } catch (error) {
             alert('Gagal menyimpan: ' + (error.response?.data?.error || error.message));
         }
+    };
+
+    const handleEdit = (student) => {
+        setFormData(student);
+        setIsEditing(true);
+        setShowModal(true);
+    };
+
+    const resetForm = () => {
+        setFormData({ name: '', nisn: '', nis: '', class: '' });
+        setIsEditing(false);
     };
 
     const handleImport = async (e) => {
@@ -140,7 +156,7 @@ const Students = () => {
                     </label>
 
                     <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => { resetForm(); setShowModal(true); }}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors"
                     >
                         <Plus size={18} /> Tambah
@@ -175,7 +191,10 @@ const Students = () => {
                                         <td className="p-4 font-mono text-gray-500">{bg.nis || '-'}</td>
                                         <td className="p-4 font-medium text-gray-900">{bg.name}</td>
                                         <td className="p-4"><span className="bg-white border border-gray-200 px-2 py-1 rounded text-xs font-bold text-gray-600 shadow-sm">{bg.class}</span></td>
-                                        <td className="p-4 text-center">
+                                        <td className="p-4 text-center flex justify-center gap-2">
+                                            <button onClick={() => handleEdit(bg)} className="text-gray-400 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-full">
+                                                <Pencil size={18} />
+                                            </button>
                                             <button onClick={() => handleDelete(bg.nisn)} className="text-gray-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-full">
                                                 <Trash2 size={18} />
                                             </button>
@@ -192,7 +211,7 @@ const Students = () => {
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 backdrop-blur-sm p-6 min-h-screen">
                     <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative animate-fade-in">
-                        <h3 className="text-xl font-bold mb-4">Tambah Siswa</h3>
+                        <h3 className="text-xl font-bold mb-4">{isEditing ? 'Edit Siswa' : 'Tambah Siswa'}</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 mb-1">Nama Lengkap</label>
@@ -202,7 +221,7 @@ const Students = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 mb-1">NISN</label>
-                                    <input required type="text" className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                    <input required disabled={isEditing} type="text" className={`w-full border p-2 rounded outline-none ${isEditing ? 'bg-gray-100 text-gray-400' : 'focus:ring-2 focus:ring-blue-500'}`}
                                         value={formData.nisn} onChange={e => setFormData({ ...formData, nisn: e.target.value })} />
                                 </div>
                                 <div>
