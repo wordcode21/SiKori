@@ -17,7 +17,14 @@ const Login = () => {
             await login(username, password);
             navigate('/');
         } catch (err) {
-            setError('Username atau password salah.');
+            console.error('Login error:', err);
+            if (err.response && err.response.status === 401) {
+                setError('Username atau password salah.');
+            } else if (!err.response) {
+                setError('Tidak dapat terhubung ke server. Periksa koneksi internet atau jaringan Anda.');
+            } else {
+                setError('Terjadi kesalahan pada server. Silakan coba lagi.');
+            }
         }
     };
 
