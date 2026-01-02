@@ -1,31 +1,9 @@
-const express = require('express');
-const cors = require('cors');
-const { sequelize } = require('./models'); // Import from models/index.js
-const apiRoutes = require('./routes/api');
-
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
+const { sequelize } = require('./models');
 const User = require('./models/User');
 const bcrypt = require('bcryptjs');
+const app = require('./app');
 
-const app = express();
 const PORT = process.env.PORT || 5000;
-
-app.use(cors({ exposedHeaders: ['Content-Disposition'] }));
-app.use(express.json());
-
-// Routes
-app.use('/api/auth', authRoutes);
-// Public backup/restore might need auth too, but sticking to plan for /api
-const { authenticate } = require('./middleware/auth');
-app.use('/api/users', userRoutes);
-app.use('/api/backup', require('./routes/backup'));
-// Protect all other API routes
-app.use('/api', authenticate, apiRoutes);
-
-app.get('/', (req, res) => {
-    res.json({ message: 'Kokurikuler API Ready', status: 'Running' });
-});
 
 // Seed Super Admin
 const seedSuperAdmin = async () => {

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  backend-test:
+    build: ./server
+    command: npm test
+    environment:
+      PORT: 5000
+      NODE_ENV: test
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+
+  frontend-test:
+    build: ./client
+    command: npm test -- --run # Run once and exit
+    environment:
+      CI: true
+    volumes:
+      - ./client:/app
+      - /app/node_modules
