@@ -18,7 +18,7 @@ router.get('/', authenticate, authorize(['SUPER_ADMIN']), async (req, res) => {
 // CREATE USER (Super Admin only)
 router.post('/', authenticate, authorize(['SUPER_ADMIN']), async (req, res) => {
     try {
-        const { username, password, fullName, role, nip, assignedClass, assignedSubjects } = req.body;
+        const { username, password, fullName, role, nip, assignedClass, assignedClasses, assignedSubjects } = req.body;
 
         const existing = await User.findOne({ where: { username } });
         if (existing) return res.status(400).json({ error: 'Username sudah digunakan' });
@@ -54,10 +54,24 @@ router.put('/:id', authenticate, authorize(['SUPER_ADMIN']), async (req, res) =>
         if (role) user.role = role;
         if (nip) user.nip = nip;
 
-        // Always update these, allow nullifying
-        user.assignedClass = assignedClass || null;
-        user.assignedClasses = assignedClasses || null;
-        user.assignedSubjects = assignedSubjects || null;
+        // Enforce data integrity based on Role
+        if (user.role === 'WALI_KELAS') {
+            user.assignedClass = assignedClass || null;
+            user.assignedClasses = assignedClasses || null;
+        } else if (user.role === 'GURU_MATA_PELAJARAN') {
+            user.assignedClass = null; // Cannot be homeroom teacher
+            user.assignedClasses = assignedClasses || null;
+        } else {
+            // Admin, Super Admin, Kepala Sekolah
+            user.assignedClass = null;
+            user.assignedClasses = null;
+            user.assignedSubjects = null;
+        }
+
+        // Update assignedSubjects if role allows (Teachers)
+        if (['WALI_KELAS', 'GURU_MATA_PELAJARAN'].includes(user.role)) {
+            user.assignedSubjects = assignedSubjects || null;
+        }
 
         if (password && password.trim() !== "") {
             const salt = await bcrypt.genSalt(10);

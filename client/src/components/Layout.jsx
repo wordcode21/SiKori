@@ -19,8 +19,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         { to: "/reports", icon: <FileText size={20} />, label: "Laporan" },
     ];
 
-    // Show Config only for Admin/Headmaster/SuperAdmin
-    if (['SUPER_ADMIN', 'ADMIN', 'KEPALA_SEKOLAH'].includes(user?.role)) {
+    // Show Config only for Admin/Headmaster/SuperAdmin AND Teachers (restricted view)
+    if (['SUPER_ADMIN', 'ADMIN', 'KEPALA_SEKOLAH', 'WALI_KELAS', 'GURU_MATA_PELAJARAN'].includes(user?.role)) {
         navItems.splice(2, 0, { to: "/config", icon: <Settings size={20} />, label: "Konfigurasi" });
     }
 

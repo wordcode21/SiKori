@@ -117,9 +117,40 @@ router.get('/activities', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Helper to check class access
+const checkClassAccess = (user, targetClasses) => {
+    // Admin/Headmaster can access all
+    if (['SUPER_ADMIN', 'ADMIN', 'KEPALA_SEKOLAH'].includes(user.role)) return true;
+
+    // Must have target classes specified
+    if (!targetClasses || targetClasses.length === 0) return false;
+
+    // Get user's allowed classes
+    let allowed = [];
+    if (user.role === 'WALI_KELAS') {
+        if (user.assignedClass) allowed.push(user.assignedClass);
+        if (user.assignedClasses && Array.isArray(user.assignedClasses)) allowed.push(...user.assignedClasses);
+    } else if (user.role === 'GURU_MATA_PELAJARAN') {
+        // Handle JSON or plain array? DB says JSON, usually parsed as array by Sequelize
+        // but let's be safe.
+        if (user.assignedClasses) {
+            if (Array.isArray(user.assignedClasses)) allowed.push(...user.assignedClasses);
+            else if (typeof user.assignedClasses === 'string') allowed.push(...JSON.parse(user.assignedClasses)); // Just in case
+        }
+    }
+
+    // Check if ALL target classes are in allowed list
+    return targetClasses.every(c => allowed.includes(c));
+};
+
 router.post('/activities', async (req, res) => {
     try {
         const { name, targetClasses, summativeAspects, formativeItems } = req.body;
+
+        // RBAC Check
+        if (!checkClassAccess(req.user, targetClasses)) {
+            return res.status(403).json({ error: 'Anda tidak memiliki akses ke kelas tujuan ini.' });
+        }
 
         // Transaction to ensure atomicity
         const result = await require('../config/database').transaction(async (t) => {
@@ -138,7 +169,6 @@ router.post('/activities', async (req, res) => {
             return activity;
         });
 
-        // Fetch full object to return
         const fullActivity = await Activity.findByPk(result.id, {
             include: [SummativeAspect, FormativeItem]
         });
@@ -146,8 +176,92 @@ router.post('/activities', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+router.put('/activities/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, targetClasses, summativeAspects, formativeItems } = req.body;
+
+        const result = await require('../config/database').transaction(async (t) => {
+            const activity = await Activity.findByPk(id, { transaction: t });
+            if (!activity) throw new Error('Activity not found');
+
+            // RBAC Check: Must have access to OLD classes AND NEW classes
+            if (!checkClassAccess(req.user, activity.targetClasses)) {
+                throw new Error('Anda tidak memiliki izin edit kegiatan ini');
+            }
+            if (!checkClassAccess(req.user, targetClasses)) {
+                throw new Error('Anda tidak memiliki akses ke kelas tujuan baru ini');
+            }
+
+            await activity.update({ name, targetClasses }, { transaction: t });
+
+            // 1. Sync Summative Aspects
+            if (summativeAspects) {
+                // Get existing IDs
+                const existingAspects = await SummativeAspect.findAll({ where: { ActivityId: id }, transaction: t });
+                const existingIds = existingAspects.map(a => a.id);
+                const incomingIds = summativeAspects.filter(a => a.id).map(a => a.id);
+
+                // Delete removed
+                const toDelete = existingIds.filter(x => !incomingIds.includes(x));
+                if (toDelete.length > 0) {
+                    await SummativeAspect.destroy({ where: { id: toDelete }, transaction: t });
+                    await Assessment.destroy({ where: { aspectId: toDelete, type: 'SUMMATIVE' }, transaction: t });
+                }
+
+                // Upsert
+                for (const asp of summativeAspects) {
+                    if (asp.id) {
+                        await SummativeAspect.update({ name: asp.name, dimension: asp.dimension }, { where: { id: asp.id }, transaction: t });
+                    } else {
+                        await SummativeAspect.create({ name: asp.name, dimension: asp.dimension, ActivityId: id }, { transaction: t });
+                    }
+                }
+            }
+
+            // 2. Sync Formative Items
+            if (formativeItems) {
+                const existingItems = await FormativeItem.findAll({ where: { ActivityId: id }, transaction: t });
+                const existingIds = existingItems.map(a => a.id);
+                const incomingIds = formativeItems.filter(a => a.id).map(a => a.id);
+
+                const toDelete = existingIds.filter(x => !incomingIds.includes(x));
+                if (toDelete.length > 0) {
+                    await FormativeItem.destroy({ where: { id: toDelete }, transaction: t });
+                    await Assessment.destroy({ where: { itemId: toDelete, type: 'FORMATIVE' }, transaction: t });
+                }
+
+                for (const itm of formativeItems) {
+                    if (itm.id) {
+                        await FormativeItem.update({ name: itm.name }, { where: { id: itm.id }, transaction: t });
+                    } else {
+                        await FormativeItem.create({ name: itm.name, ActivityId: id }, { transaction: t });
+                    }
+                }
+            }
+
+            return activity;
+        });
+
+        const updatedActivity = await Activity.findByPk(result.id, {
+            include: [SummativeAspect, FormativeItem]
+        });
+        res.json(updatedActivity);
+
+    } catch (e) {
+        res.status(e.message.includes('izin') || e.message.includes('akses') ? 403 : 500).json({ error: e.message });
+    }
+});
+
 router.delete('/activities/:id', async (req, res) => {
     try {
+        const activity = await Activity.findByPk(req.params.id);
+        if (!activity) return res.json({ message: 'Already deleted' });
+
+        if (!checkClassAccess(req.user, activity.targetClasses)) {
+            return res.status(403).json({ error: 'Anda tidak memiliki izin menghapus kegiatan ini' });
+        }
+
         await Activity.destroy({ where: { id: req.params.id } });
         res.json({ message: 'Deleted' });
     } catch (e) { res.status(500).json({ error: e.message }); }

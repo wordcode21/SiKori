@@ -35,13 +35,18 @@ const Reports = () => {
 
             // 1. Summative Sheet
             if (activity.SummativeAspects && activity.SummativeAspects.length > 0) {
-                const headers = ['No', 'NISN', 'Nama', 'Kelas', ...activity.SummativeAspects.map(a => a.name)];
+                const headers = ['No', 'NISN', 'NIS', 'Nama', 'Kelas', ...activity.SummativeAspects.map(a => a.name)];
                 const data = students.map((s, idx) => {
-                    const row = { No: idx + 1, NISN: s.nisn, Nama: s.name, Kelas: s.class };
+                    const row = { No: idx + 1, NISN: s.nisn, NIS: s.nis, Nama: s.name, Kelas: s.class };
                     activity.SummativeAspects.forEach(asp => {
                         // Find Assessment
                         const ass = assessments.find(ax => ax.studentNisn === s.nisn && ax.aspectId === asp.id && ax.type === 'SUMMATIVE');
-                        row[asp.name] = ass?.score || '-';
+                        let val = ass?.score || '-';
+                        if (val === 'SB') val = 'Sangat Baik';
+                        if (val === 'B') val = 'Baik';
+                        if (val === 'C') val = 'Cukup';
+                        if (val === 'K') val = 'Kurang';
+                        row[asp.name] = val;
                     });
                     return row;
                 });
@@ -52,10 +57,10 @@ const Reports = () => {
             // 2. Formative Sheet
             if (activity.FormativeItems && activity.FormativeItems.length > 0) {
                 const data = students.map((s, idx) => {
-                    const row = { No: idx + 1, NISN: s.nisn, Nama: s.name, Kelas: s.class };
+                    const row = { No: idx + 1, NISN: s.nisn, NIS: s.nis, Nama: s.name, Kelas: s.class };
                     activity.FormativeItems.forEach(itm => {
                         const ass = assessments.find(ax => ax.studentNisn === s.nisn && ax.itemId === itm.id && ax.type === 'FORMATIVE');
-                        row[itm.name] = ass?.checked ? 'V' : '-';
+                        row[itm.name] = ass?.checked ? 'Terpenuhi' : 'Tidak Terpenuhi';
                     });
                     return row;
                 });

@@ -18,8 +18,8 @@ const UserManagement = () => {
         role: 'GURU_MATA_PELAJARAN',
         nip: '',
         assignedClass: '',
-        assignedClasses: [], // Array for Guru Mapel
-        assignedSubjects: []
+        assignedClasses: '', // String for input, convert to array on submit
+        assignedSubjects: ''
     });
 
     useEffect(() => {
@@ -40,10 +40,20 @@ const UserManagement = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...formData,
+                assignedClasses: typeof formData.assignedClasses === 'string'
+                    ? formData.assignedClasses.split(',').map(c => c.trim()).filter(Boolean)
+                    : formData.assignedClasses,
+                assignedSubjects: typeof formData.assignedSubjects === 'string'
+                    ? formData.assignedSubjects.split(',').map(s => s.trim()).filter(Boolean)
+                    : formData.assignedSubjects
+            };
+
             if (editMode) {
-                await api.put(`/users/${formData.id}`, formData);
+                await api.put(`/users/${formData.id}`, payload);
             } else {
-                await api.post('/users', formData);
+                await api.post('/users', payload);
             }
             setShowModal(false);
             resetForm();
@@ -64,13 +74,18 @@ const UserManagement = () => {
     };
 
     const openEdit = (user) => {
-        setFormData({ ...user, password: '' }); // Don't show hash
+        setFormData({
+            ...user,
+            password: '',
+            assignedClasses: Array.isArray(user.assignedClasses) ? user.assignedClasses.join(', ') : (user.assignedClasses || ''),
+            assignedSubjects: Array.isArray(user.assignedSubjects) ? user.assignedSubjects.join(', ') : (user.assignedSubjects || '')
+        }); // Don't show hash
         setEditMode(true);
         setShowModal(true);
     };
 
     const resetForm = () => {
-        setFormData({ id: '', username: '', password: '', fullName: '', role: 'GURU_MATA_PELAJARAN', nip: '', assignedClass: '', assignedClasses: [], assignedSubjects: [] });
+        setFormData({ id: '', username: '', password: '', fullName: '', role: 'GURU_MATA_PELAJARAN', nip: '', assignedClass: '', assignedClasses: '', assignedSubjects: '' });
         setEditMode(false);
     };
 
@@ -97,6 +112,7 @@ const UserManagement = () => {
                             <th className="p-4">Username</th>
                             <th className="p-4">Role</th>
                             <th className="p-4">NIP</th>
+                            <th className="p-4">Kelas Ajar</th>
                             <th className="p-4 text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -112,8 +128,14 @@ const UserManagement = () => {
                                         }`}>
                                         {u.role.replace('_', ' ')}
                                     </span>
+                                    {u.role === 'WALI_KELAS' && u.assignedClass && (
+                                        <div className="text-[10px] text-gray-500 mt-1">Wali: {u.assignedClass}</div>
+                                    )}
                                 </td>
                                 <td className="p-4 text-gray-500">{u.nip || '-'}</td>
+                                <td className="p-4 text-sm text-gray-600">
+                                    {u.assignedClasses ? (Array.isArray(u.assignedClasses) ? u.assignedClasses.join(', ') : u.assignedClasses) : '-'}
+                                </td>
                                 <td className="p-4 text-center flex justify-center gap-2">
                                     <button onClick={() => openEdit(u)} className="text-blue-500 hover:bg-blue-50 p-2 rounded-full"><Edit size={16} /></button>
                                     <button onClick={() => handleDelete(u.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-full"><Trash2 size={16} /></button>
@@ -169,15 +191,17 @@ const UserManagement = () => {
                                 </div>
                             )}
 
-                            {formData.role === 'GURU_MATA_PELAJARAN' && (
+                            {(formData.role === 'GURU_MATA_PELAJARAN' || formData.role === 'WALI_KELAS') && (
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 mb-1">Kelas Ajar (Pisahkan dengan koma)</label>
                                     <input type="text" className="w-full border p-2 rounded outline-none focus:ring-2 focus:ring-blue-500"
-                                        value={Array.isArray(formData.assignedClasses) ? formData.assignedClasses.join(', ') : formData.assignedClasses || ''}
-                                        onChange={e => setFormData({ ...formData, assignedClasses: e.target.value.split(',').map(c => c.trim()).filter(Boolean) })}
+                                        value={formData.assignedClasses}
+                                        onChange={e => setFormData({ ...formData, assignedClasses: e.target.value })}
                                         placeholder="X-A, X-B, XI-A"
                                     />
-                                    <p className="text-[10px] text-gray-400 mt-1">Masukkan daftar kelas yang diajar, pisahkan dengan koma.</p>
+                                    <p className="text-[10px] text-gray-400 mt-1">
+                                        {formData.role === 'WALI_KELAS' ? 'Kelas tambahan yang diajar selain kelas wali.' : 'Masukkan daftar kelas yang diajar.'}
+                                    </p>
                                 </div>
                             )}
 
@@ -185,8 +209,8 @@ const UserManagement = () => {
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 mb-1">Mata Pelajaran (Pisahkan dengan koma)</label>
                                     <input type="text" className="w-full border p-2 rounded outline-none focus:ring-2 focus:ring-blue-500"
-                                        value={Array.isArray(formData.assignedSubjects) ? formData.assignedSubjects.join(', ') : formData.assignedSubjects || ''}
-                                        onChange={e => setFormData({ ...formData, assignedSubjects: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                                        value={formData.assignedSubjects}
+                                        onChange={e => setFormData({ ...formData, assignedSubjects: e.target.value })}
                                         placeholder="Matematika, Fisika"
                                     />
                                 </div>

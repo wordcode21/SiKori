@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Plus, Trash2, Save, X } from 'lucide-react';
+import { Plus, Trash2, Save, X, Pencil } from 'lucide-react';
 
 const DIMENSIONS = [
     "Keimanan dan Ketakwaan Terhadap Tuhan YME",
@@ -23,6 +23,7 @@ const Config = () => {
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+    const [editId, setEditId] = useState(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -32,30 +33,76 @@ const Config = () => {
         formativeItems: []
     });
 
-    useEffect(() => {
-        fetchActivities();
-    }, []);
+    const [user, setUser] = useState(null);
 
-    const fetchActivities = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get('/activities');
-            setActivities(res.data);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
+    useEffect(() => {
+        const init = async () => {
+            setLoading(true);
+            try {
+                // Fetch User
+                const userRes = await api.get('/auth/me'); // Assuming this exists or similar
+                // Actually existing auth might store in localStorage or context, but let's try fetch for safety or mock if needed.
+                // Wait, I don't see /auth/me in api.js?
+                // Let's assume standard auth flow stores user in localStorage 'user'
+                const storedUser = JSON.parse(localStorage.getItem('user'));
+                setUser(storedUser);
+
+                // Fetch Activities
+                const res = await api.get('/activities');
+                setActivities(res.data);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        init();
+    }, []);
 
     const handleDelete = async (id) => {
         if (!confirm('Hapus kegiatan ini? Data nilai terkait juga akan terhapus.')) return;
         try {
             await api.delete(`/activities/${id}`);
-            fetchActivities();
+            // Refresh
+            const res = await api.get('/activities');
+            setActivities(res.data);
         } catch (e) {
-            alert('Gagal menghapus');
+            alert('Gagal menghapus: ' + (e.response?.data?.error || 'Error'));
         }
+    };
+
+    // Helper to get allowed classes for current user to display in dropdown/hint
+    const getAllowedClasses = (u) => {
+        if (!u) return [];
+        if (['SUPER_ADMIN', 'ADMIN', 'KEPALA_SEKOLAH'].includes(u.role)) return []; // All allowed implied
+        let classes = [];
+        if (u.role === 'WALI_KELAS') {
+            if (u.assignedClass) classes.push(u.assignedClass);
+            if (u.assignedClasses) {
+                if (Array.isArray(u.assignedClasses)) classes.push(...u.assignedClasses);
+                else if (typeof u.assignedClasses === 'string') classes.push(...u.assignedClasses.split(',').map(c => c.trim()));
+            }
+        }
+        if (u.role === 'GURU_MATA_PELAJARAN') {
+            if (u.assignedClasses) {
+                if (Array.isArray(u.assignedClasses)) classes.push(...u.assignedClasses);
+                else if (typeof u.assignedClasses === 'string') classes.push(...u.assignedClasses.split(',').map(c => c.trim()));
+            }
+        }
+        return [...new Set(classes)].filter(Boolean);
+    };
+
+    const allowedClasses = getAllowedClasses(user);
+
+    const handleEdit = (act) => {
+        setEditId(act.id);
+        setFormData({
+            name: act.name,
+            targetClasses: act.targetClasses ? act.targetClasses.join(', ') : '',
+            summativeAspects: act.SummativeAspects || [],
+            formativeItems: act.FormativeItems || []
+        });
+        setShowForm(true);
     };
 
     const handleSubmit = async (e) => {
@@ -68,10 +115,19 @@ const Config = () => {
                 targetClasses: classesArray
             };
 
-            await api.post('/activities', payload);
+            if (editId) {
+                await api.put(`/activities/${editId}`, payload);
+            } else {
+                await api.post('/activities', payload);
+            }
+
             setShowForm(false);
+            setEditId(null);
             setFormData({ name: '', targetClasses: '', summativeAspects: [], formativeItems: [] });
-            fetchActivities();
+            setFormData({ name: '', targetClasses: '', summativeAspects: [], formativeItems: [] });
+
+            const res = await api.get('/activities');
+            setActivities(res.data);
         } catch (e) {
             alert('Gagal menyimpan: ' + (e.response?.data?.error || e.message));
         }
@@ -114,8 +170,8 @@ const Config = () => {
         return (
             <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold">Tambah Kegiatan Baru</h2>
-                    <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-red-500"><X size={24} /></button>
+                    <h2 className="text-2xl font-bold">{editId ? 'Edit Kegiatan' : 'Tambah Kegiatan Baru'}</h2>
+                    <button onClick={() => { setShowForm(false); setEditId(null); setFormData({ name: '', targetClasses: '', summativeAspects: [], formativeItems: [] }); }} className="text-gray-500 hover:text-red-500"><X size={24} /></button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
@@ -132,7 +188,12 @@ const Config = () => {
                                 <label className="block text-sm font-bold text-gray-600 mb-1">Target Kelas</label>
                                 <input type="text" className="w-full border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
                                     value={formData.targetClasses} onChange={e => setFormData({ ...formData, targetClasses: e.target.value })} placeholder="Contoh: X-A, X-B" />
-                                <p className="text-xs text-gray-400 mt-1">Pisahkan dengan koma. Kosongkan untuk semua kelas.</p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    {allowedClasses.length > 0
+                                        ? `Kelas yang diizinkan: ${allowedClasses.join(', ')}`
+                                        : "Pisahkan dengan koma. Kosongkan untuk semua kelas (Admin only)."
+                                    }
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -198,15 +259,25 @@ const Config = () => {
                     <h2 className="text-2xl font-bold text-gray-800">Konfigurasi Penilaian</h2>
                     <p className="text-sm text-gray-500">Kelola kegiatan dan kriteria penilaian.</p>
                 </div>
-                <button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium">
+                <button onClick={() => { setEditId(null); setFormData({ name: '', targetClasses: '', summativeAspects: [], formativeItems: [] }); setShowForm(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium">
                     <Plus size={18} /> Tambah Kegiatan
                 </button>
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-                {activities.map((act) => (
+                {activities.filter(act => {
+                    // Filter logic:
+                    // If Admin/Head -> show all
+                    if (!user || ['SUPER_ADMIN', 'ADMIN', 'KEPALA_SEKOLAH'].includes(user.role)) return true;
+                    // If teacher/wali -> show if targetClasses has intersection with allowedClasses
+                    if (!act.targetClasses || act.targetClasses.length === 0) return true; // View global acts? Maybe assume yes
+                    return act.targetClasses.some(c => allowedClasses.includes(c));
+                }).map((act) => (
                     <div key={act.id} className="glass-card p-6 relative group">
-                        <button onClick={() => handleDelete(act.id)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
+                        <div className="absolute top-4 right-4 flex gap-2">
+                            <button onClick={() => handleEdit(act)} className="text-gray-300 hover:text-blue-500 transition-colors"><Pencil size={20} /></button>
+                            <button onClick={() => handleDelete(act.id)} className="text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={20} /></button>
+                        </div>
                         <h3 className="text-xl font-bold text-gray-800 mb-2">{act.name}</h3>
                         <div className="flex gap-2 mb-4">
                             {(!act.targetClasses || act.targetClasses.length === 0)

@@ -8,16 +8,49 @@ const Dashboard = () => {
     useEffect(() => {
         const loadStats = async () => {
             try {
-                // Parallel fetch for simple stats
-                const [studentsRes, activitiesRes] = await Promise.all([
+                // Parallel fetch for stats
+                const [studentsRes, activitiesRes, assessRes] = await Promise.all([
                     api.get('/students'),
-                    api.get('/activities')
+                    api.get('/activities'),
+                    api.get('/assessments')
                 ]);
 
+                const students = studentsRes.data;
+                const activities = activitiesRes.data;
+                const assessments = assessRes.data; // All assessments
+
+                // Calculate Progress
+                let totalExpected = 0;
+                activities.forEach(act => {
+                    const aspectCount = (act.SummativeAspects?.length || 0) + (act.FormativeItems?.length || 0);
+
+                    // Determine eligible students for this activity
+                    let eligibleCount = 0;
+                    if (!act.targetClasses || act.targetClasses.length === 0) {
+                        eligibleCount = students.length;
+                    } else {
+                        // act.targetClasses should be an array of strings
+                        // If it's a string (legacy/bug), split it? Ideally backend returns array.
+                        // Based on Config.jsx, we send array. Backend stores array (if JSON) or text?
+                        // Let's assume array as per my Edit Config fix.
+                        // But wait, in Config.jsx showForm, we join it.
+                        // In backend Model? `targetClasses: { type: DataTypes.JSON }` usually? 
+                        // Let's assume it works as array. Safe check:
+                        const targets = Array.isArray(act.targetClasses) ? act.targetClasses : [];
+                        if (targets.length === 0) eligibleCount = students.length;
+                        else eligibleCount = students.filter(s => targets.includes(s.class)).length;
+                    }
+
+                    totalExpected += aspectCount * eligibleCount;
+                });
+
+                const totalActual = assessments.length;
+                const percentage = totalExpected === 0 ? 0 : Math.round((totalActual / totalExpected) * 100);
+
                 setStats({
-                    students: studentsRes.data.length,
-                    activities: activitiesRes.data.length,
-                    assessed: 0 // Need detailed query for this, skip for now or mock
+                    students: students.length,
+                    activities: activities.length,
+                    assessed: percentage
                 });
             } catch (e) {
                 console.error("Dashboard load failed", e);

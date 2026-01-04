@@ -39,6 +39,19 @@ const Profile = () => {
                         <h3 className="text-xl font-bold">{user.fullName}</h3>
                         <p className="text-gray-500">Role: <span className="font-mono bg-gray-100 px-2 rounded text-xs">{user.role?.replace(/_/g, ' ')}</span></p>
                         <p className="text-gray-400 text-sm">@{user.username}</p>
+
+                        {(user.role === 'GURU_MATA_PELAJARAN' || user.role === 'WALI_KELAS') && (
+                            <div className="mt-2 text-sm">
+                                {user.role === 'WALI_KELAS' && user.assignedClass && (
+                                    <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold mr-2">Wali: {user.assignedClass}</span>
+                                )}
+                                {user.assignedClasses && user.assignedClasses.length > 0 && (
+                                    <div className="mt-1 text-gray-600">
+                                        <span className="font-bold">Kelas Ajar:</span> {Array.isArray(user.assignedClasses) ? user.assignedClasses.join(', ') : user.assignedClasses}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
